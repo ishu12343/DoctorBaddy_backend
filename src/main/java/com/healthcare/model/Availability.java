@@ -2,41 +2,43 @@ package com.healthcare.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 
 @Entity
-@Table(name = "appointments")
+@Table(name = "availabilities")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Appointment {
+public class Availability {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "patient_id", nullable = false)
-    private User patient;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;
 
-    @Column(nullable = false)
-    private LocalDateTime appointmentTime;
-    
-    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private AppointmentStatus status;
-    
+    @Column(nullable = false)
+    private DayOfWeek dayOfWeek;
+
+    @Column(nullable = false)
+    private LocalTime startTime;
+
+    @Column(nullable = false)
+    private LocalTime endTime;
+
+    private boolean isRecurring;
+    private LocalDateTime validFrom;
+    private LocalDateTime validUntil;
+    private boolean isAvailable;
     private String reason;
-    private String notes;
-    private String cancellationReason;
-    private String meetingLink;
-    private boolean isPaid;
-    private Double fee;
-    private String paymentId;
+    
+    @Column(columnDefinition = "boolean default true")
+    private boolean active = true;
+    
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     
@@ -44,17 +46,13 @@ public class Appointment {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (status == null) {
-            status = AppointmentStatus.PENDING;
+        if (validFrom == null) {
+            validFrom = LocalDateTime.now();
         }
     }
     
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-    
-    public enum AppointmentStatus {
-        PENDING, CONFIRMED, COMPLETED, CANCELLED, RESCHEDULED, NO_SHOW
     }
 }
