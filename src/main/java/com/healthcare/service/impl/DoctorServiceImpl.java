@@ -78,12 +78,37 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     public String login(Doctor loginRequest) {
-        Doctor doctor = doctorRepository.findByEmail(loginRequest.getEmail());
-        if (doctor == null || !doctor.getPassword().equals(loginRequest.getPassword())) {
-            throw new AuthenticationException("Invalid credentials");
+        System.out.println("Attempting login for email: " + loginRequest.getEmail());
+        
+        if (loginRequest.getEmail() == null || loginRequest.getEmail().trim().isEmpty()) {
+            System.err.println("Login failed: Email is null or empty");
+            throw new AuthenticationException("Email is required");
         }
-
-        return jwtUtil.generateToken(doctor.getEmail());
+        
+        if (loginRequest.getPassword() == null || loginRequest.getPassword().trim().isEmpty()) {
+            System.err.println("Login failed: Password is null or empty");
+            throw new AuthenticationException("Password is required");
+        }
+        
+        Doctor doctor = doctorRepository.findByEmail(loginRequest.getEmail());
+        if (doctor == null) {
+            System.err.println("Login failed: No doctor found with email: " + loginRequest.getEmail());
+            throw new AuthenticationException("Invalid email or password");
+        }
+        
+        if (!doctor.isApproved()) {
+            System.err.println("Login failed: Doctor account not approved: " + loginRequest.getEmail());
+            throw new AuthenticationException("Your account is pending approval. Please contact support.");
+        }
+        
+        if (!doctor.getPassword().equals(loginRequest.getPassword())) {
+            System.err.println("Login failed: Invalid password for email: " + loginRequest.getEmail());
+            throw new AuthenticationException("Invalid email or password");
+        }
+        
+        String token = jwtUtil.generateToken(doctor.getEmail());
+        System.out.println("Login successful, generated token for: " + loginRequest.getEmail());
+        return token;
     }
 
 }

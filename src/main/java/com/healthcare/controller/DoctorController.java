@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.healthcare.exception.AuthenticationException;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -79,11 +80,29 @@ public class DoctorController {
 //    }
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Doctor loginRequest) {
-        String token = doctorService.login(loginRequest);
-        System.out.println("Generated Token: " + token);
-
-        return ResponseEntity.ok(Collections.singletonMap("token", token));
-
+        try {
+            System.out.println("Login request received for email: " + loginRequest.getEmail());
+            
+            if (loginRequest.getEmail() == null || loginRequest.getEmail().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Email is required"));
+            }
+            if (loginRequest.getPassword() == null || loginRequest.getPassword().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Password is required"));
+            }
+            
+            String token = doctorService.login(loginRequest);
+            System.out.println("Login successful, generated token: " + token);
+            
+            return ResponseEntity.ok(Collections.singletonMap("token", token));
+        } catch (AuthenticationException e) {
+            System.err.println("Authentication failed: " + e.getMessage());
+            return ResponseEntity.status(401).body(Collections.singletonMap("error", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("Error during doctor login: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", 
+                "An error occurred during login: " + e.getMessage()));
+        }
     }
     
 

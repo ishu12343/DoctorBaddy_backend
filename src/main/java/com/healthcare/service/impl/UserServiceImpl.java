@@ -33,12 +33,27 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String login(User loginRequest) {
-        User user = userRepository.findByEmail(loginRequest.getEmail());
-        if (user == null || !user.getPassword().equals(loginRequest.getPassword())) {
-            throw new AuthenticationException("Invalid credentials");
-        }
+        try {
+            if (loginRequest == null) {
+                throw new AuthenticationException("Login request cannot be null");
+            }
+            
+            User user = userRepository.findByEmail(loginRequest.getEmail());
+            if (user == null) {
+                throw new AuthenticationException("User not found with email: " + loginRequest.getEmail());
+            }
+            
+            if (!user.getPassword().equals(loginRequest.getPassword())) {
+                throw new AuthenticationException("Invalid password");
+            }
 
-        return jwtUtil.generateToken(user.getEmail());
+            return jwtUtil.generateToken(user.getEmail());
+        } catch (Exception e) {
+            // Log the error for debugging
+            System.err.println("Login error: " + e.getMessage());
+            e.printStackTrace();
+            throw e; // Re-throw to be handled by the controller
+        }
     }
 
 }
