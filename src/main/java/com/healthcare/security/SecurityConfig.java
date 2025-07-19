@@ -7,11 +7,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.Arrays;
 
 @Configuration
@@ -27,15 +30,15 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
-                    "/api/doctors/signup", 
-                    "/api/doctors/login", 
-                    "/api/users/login", 
+                    "/api/doctors/signup",
+                    "/api/doctors/login",
+                    "/api/users/login",
                     "/api/users/signup",
+                    "/api/auth/doctors/register",
+                    "/api/auth/patients/register",
                     "/error"
-                )
-                .permitAll()
-                .anyRequest()
-                .authenticated()
+                ).permitAll()
+                .anyRequest().authenticated()
             )
             .exceptionHandling(exception -> exception
                 .authenticationEntryPoint((request, response, authException) -> {
@@ -49,11 +52,10 @@ public class SecurityConfig {
 
         return http.build();
     }
-    
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Allow all origins for development (restrict in production)
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:8081",
             "http://localhost:8080",
@@ -64,7 +66,7 @@ public class SecurityConfig {
             "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
         ));
         configuration.setAllowedHeaders(Arrays.asList(
-            "Authorization", 
+            "Authorization",
             "Content-Type",
             "Accept",
             "X-Requested-With",
@@ -76,7 +78,7 @@ public class SecurityConfig {
         ));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L); // 1 hour
-        
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
@@ -85,5 +87,10 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 }

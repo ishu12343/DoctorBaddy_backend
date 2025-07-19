@@ -90,11 +90,12 @@ public class DoctorServiceImpl implements DoctorService {
             throw new AuthenticationException("Password is required");
         }
         
-        Doctor doctor = doctorRepository.findByEmail(loginRequest.getEmail());
-        if (doctor == null) {
-            System.err.println("Login failed: No doctor found with email: " + loginRequest.getEmail());
-            throw new AuthenticationException("Invalid email or password");
-        }
+        // Use Optional to handle the case where doctor might not be found
+        Doctor doctor = doctorRepository.findByEmail(loginRequest.getEmail())
+            .orElseThrow(() -> {
+                System.err.println("Login failed: No doctor found with email: " + loginRequest.getEmail());
+                return new AuthenticationException("Invalid email or password");
+            });
         
         if (!doctor.isApproved()) {
             System.err.println("Login failed: Doctor account not approved: " + loginRequest.getEmail());
