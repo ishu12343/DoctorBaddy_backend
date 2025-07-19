@@ -56,6 +56,7 @@ public class AuthServiceImpl implements AuthService {
         doctor.setLicensePath(registration.getLicensePath());
         doctor.setPhotoPath(registration.getPhotoPath());
         doctor.setApproved(registration.isApproved());
+        doctor.setRole(registration.getRole() != null ? registration.getRole() : "DOCTOR");
         doctor.setCreatedAt(LocalDateTime.now());
         doctor.setUpdatedAt(LocalDateTime.now());
 
@@ -81,6 +82,7 @@ public class AuthServiceImpl implements AuthService {
         user.setBloodGroup(registration.getBloodGroup());
         user.setAddress(registration.getAddress());
         user.setEmergencyContact(registration.getEmergencyContact());
+        user.setRole(registration.getRole() != null ? registration.getRole() : "PATIENT");
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
 

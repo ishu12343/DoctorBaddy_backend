@@ -34,6 +34,9 @@ public class Doctor {
     
     @Column(nullable = false)
     private String password;
+    
+    @Column(nullable = false)
+    private String role; // DOCTOR, ADMIN
 
     @Column(unique = true)
     private String registrationNumber;
@@ -214,6 +217,14 @@ public class Doctor {
 
 	public void setPhotoPath(String photoPath) {
 		this.photoPath = photoPath;
+	}
+
+	public String getRole() {
+		return role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
 	}
 
 	public boolean isApproved() {
