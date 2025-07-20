@@ -1,54 +1,29 @@
 package com.healthcare.service.impl;
 
-import com.healthcare.dto.DoctorProfileDTO;
 import com.healthcare.exception.AuthenticationException;
-import com.healthcare.exception.ResourceNotFoundException;
-import com.healthcare.model.Appointment;
 import com.healthcare.model.Doctor;
-import com.healthcare.model.Notification;
-import com.healthcare.model.Review;
-import com.healthcare.repository.*;
+import com.healthcare.repository.DoctorRepository;
 import com.healthcare.security.JwtUtil;
 import com.healthcare.service.DoctorService;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class DoctorServiceImpl implements DoctorService {
-    private static final String DOCTOR_NOT_FOUND_MSG = "Doctor not found with id: ";
-    
     private final DoctorRepository doctorRepository;
-    private final AppointmentRepository appointmentRepository;
-    private final ReviewRepository reviewRepository;
-    private final AvailabilityRepository availabilityRepository;
-    private final NotificationRepository notificationRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final ModelMapper modelMapper;
-    
-    @Value("${file.upload-dir}")
-    private String uploadDir;
-    
-    @Value("${app.base-url}")
-    private String baseUrl;
+
+    public DoctorServiceImpl(DoctorRepository doctorRepository) {
+        this.doctorRepository = doctorRepository;
+    }
 
     @Override
     public Doctor saveDoctor(Doctor doctor) {
@@ -81,8 +56,37 @@ public class DoctorServiceImpl implements DoctorService {
         return path.toString();
     }
 
+//	public Doctor login(Doctor loginRequest) {
+//	        Doctor doctor = doctorRepository.findByEmail(loginRequest.getEmail());
+//	        if (doctor == null) {
+//	            throw new ResourceNotFoundException("Doctor with this email does not exist.");
+//	        }
+//
+//	        if (!doctor.getPassword().equals(loginRequest.getPassword())) {
+//	            throw new AuthenticationException("Invalid credentials.");
+//	        }
+//
+//	        if (!doctor.isApproved()) {
+//	            throw new AuthenticationException("Doctor account not approved yet.");
+//	        }
+//
+//	        return doctor;
+//	    }
+    
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @Override
     public String login(Doctor loginRequest) {
+        System.out.println("Attempting login for email: " + loginRequest.getEmail());
+        
+        if (loginRequest.getEmail() == null || loginRequest.getEmail().trim().isEmpty()) {
+            System.err.println("Login failed: Email is null or empty");
+            throw new AuthenticationException("Email is required");
+        }
+        
+        if (loginRequest.getPassword() == null || loginRequest.getPassword().trim().isEmpty()) {
+            System.err.println("Login failed: Password is null or empty");
             throw new AuthenticationException("Password is required");
         }
         

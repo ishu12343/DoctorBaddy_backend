@@ -62,5 +62,10 @@ public class JwtUtil {
         }
         return false;
     }
+
+	public Long extractUserId(String token) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
 

@@ -5,56 +5,20 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "appointments")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class Appointment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "patient_id", nullable = false)
+    @ManyToOne
     private User patient;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "doctor_id", nullable = false)
+    @ManyToOne
     private Doctor doctor;
 
-    @Column(nullable = false)
     private LocalDateTime appointmentTime;
-    
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private AppointmentStatus status;
-    
-    private String reason;
-    private String notes;
-    private String cancellationReason;
-    private String meetingLink;
-    private boolean isPaid;
-    private Double fee;
-    private String paymentId;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-        if (status == null) {
-            status = AppointmentStatus.PENDING;
-        }
-    }
-    
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
-    
-    public enum AppointmentStatus {
-        PENDING, CONFIRMED, COMPLETED, CANCELLED, RESCHEDULED, NO_SHOW
-    }
+    private String status;
 }
