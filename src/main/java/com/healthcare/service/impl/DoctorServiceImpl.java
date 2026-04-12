@@ -19,7 +19,8 @@ import java.nio.file.Path;
 @Service
 @RequiredArgsConstructor
 public class DoctorServiceImpl implements DoctorService {
-    private final DoctorRepository doctorRepository;
+    @Autowired
+    private  DoctorRepository doctorRepository;
 
     @Override
     public Doctor saveDoctor(Doctor doctor) {
