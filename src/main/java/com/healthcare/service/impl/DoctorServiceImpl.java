@@ -21,10 +21,6 @@ import java.nio.file.Path;
 public class DoctorServiceImpl implements DoctorService {
     private final DoctorRepository doctorRepository;
 
-    public DoctorServiceImpl(DoctorRepository doctorRepository) {
-        this.doctorRepository = doctorRepository;
-    }
-
     @Override
     public Doctor saveDoctor(Doctor doctor) {
         return doctorRepository.save(doctor);
@@ -34,6 +30,7 @@ public class DoctorServiceImpl implements DoctorService {
     public List<Doctor> getAllDoctors() {
         return doctorRepository.findAll();
     }
+    
     @Override
     public Doctor registerDoctor(Doctor doctor, MultipartFile idProof, MultipartFile license,
                                  MultipartFile degreeCert, MultipartFile photo) throws IOException {

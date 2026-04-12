@@ -26,10 +26,11 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
+            .cors().configurationSource(corsConfigurationSource())
+            .and()
+            .csrf().disable()
+            .authorizeRequests()
+                .antMatchers(
                     "/api/doctors/signup",
                     "/api/doctors/login",
                     "/api/users/login",
@@ -39,15 +40,15 @@ public class SecurityConfig {
                     "/error"
                 ).permitAll()
                 .anyRequest().authenticated()
-            )
-            .exceptionHandling(exception -> exception
+            .and()
+            .exceptionHandling()
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.sendError(401, "Unauthorized");
                 })
-            )
-            .sessionManagement(session -> session
+            .and()
+            .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
+            .and()
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
