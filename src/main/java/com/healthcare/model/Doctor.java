@@ -21,7 +21,7 @@ public class Doctor {
     private Long id;
 
     @Column(name = "full_name", nullable = false)
-    @JsonProperty("full_name")
+    @JsonProperty("fullName")
     private String fullName;
     
     @Column(nullable = false, unique = true)
@@ -37,26 +37,43 @@ public class Doctor {
     private String location;
     
     @Column(name = "registration_number", unique = true)
-    @JsonProperty("registration_number")
+    @JsonProperty("registrationNumber")
     private String registrationNumber;
     
     @Column(name = "license_number")
-    @JsonProperty("license_number")
+    @JsonProperty("licenseNumber")
     private String licenseNumber;
     
     private String council;
     private String degree;
     private String specialty;
     private String experience;
-    @JsonProperty("clinic_name")
+    
+    @Column(name = "degree_cert_path")
+    @JsonProperty("degreeCertPath")
+    private String degreeCertPath;
+    
+    @Column(name = "id_proof_path")
+    @JsonProperty("idProofPath")
+    private String idProofPath;
+    
+    @Column(name = "license_path")
+    @JsonProperty("licensePath")
+    private String licensePath;
+    
+    @Column(name = "photo_path", columnDefinition = "LONGTEXT")
+    @JsonProperty("photoPath")
+    private String photoPath;
+    
+    @JsonProperty("clinicName")
     private String clinicName;
     
     @Column(name = "clinic_address", length = 1000)
-    @JsonProperty("clinic_address")
+    @JsonProperty("clinicAddress")
     private String clinicAddress;
     
     @Column(name = "profile_photo", columnDefinition = "TEXT")
-    @JsonProperty("profile_photo")
+    @JsonProperty("profilePhoto")
     private String profilePhoto;
     
     @Column(nullable = false)
@@ -66,26 +83,26 @@ public class Doctor {
     private String dob;
     
     @Column(name = "blood_group")
-    @JsonProperty("blood_group")
+    @JsonProperty("bloodGroup")
     private String bloodGroup;
     
     @Column(name = "available_days")
-    @JsonProperty("available_days")
+    @JsonProperty("availableDays")
     private String availableDays;
     
     @Column(name = "available_from")
-    @JsonProperty("available_from")
+    @JsonProperty("availableFrom")
     private String availableFrom;
     
     @Column(name = "available_to")
-    @JsonProperty("available_to")
+    @JsonProperty("availableTo")
     private String availableTo;
     
     private String city;
     private String state;
     
     @Column(name = "zip_code")
-    @JsonProperty("zip_code")
+    @JsonProperty("zipCode")
     private String zipCode;
     
     private String languages;
@@ -99,19 +116,19 @@ public class Doctor {
     private Boolean suspended = false;
     
     @Column(name = "reset_otp")
-    @JsonProperty("reset_otp")
+    @JsonProperty("resetOtp")
     private String resetOtp;
     
     @Column(name = "otp_expires_at")
-    @JsonProperty("otp_expires_at")
+    @JsonProperty("otpExpiresAt")
     private LocalDateTime otpExpiresAt;
     
     @Column(name = "created_at", updatable = false)
-    @JsonProperty("created_at")
+    @JsonProperty("createdAt")
     private LocalDateTime createdAt;
     
     @Column(name = "updated_at")
-    @JsonProperty("updated_at")
+    @JsonProperty("updatedAt")
     private LocalDateTime updatedAt;
     
     @PrePersist

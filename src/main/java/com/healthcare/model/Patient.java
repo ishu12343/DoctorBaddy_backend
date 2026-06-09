@@ -21,7 +21,7 @@ public class Patient {
     private Long id;
 
     @Column(name = "full_name", nullable = false)
-    @JsonProperty("full_name")
+    @JsonProperty("fullName")
     private String fullName;
     
     @Column(nullable = false, unique = true)
@@ -36,11 +36,11 @@ public class Patient {
     private String gender;
     
     @Column(name = "date_of_birth")
-    @JsonProperty("date_of_birth")
+    @JsonProperty("dateOfBirth")
     private String dateOfBirth;
     
     @Column(name = "blood_group")
-    @JsonProperty("blood_group")
+    @JsonProperty("bloodGroup")
     private String bloodGroup;
     
     private String address;
@@ -57,7 +57,7 @@ public class Patient {
     private String surgeries;
     
     @Column(name = "emergency_contact_name")
-    @JsonProperty("emergency_contact_name")
+    @JsonProperty("emergencyContact")
     private String emergencyContactName;
     
     @Column(name = "emergency_contact_number")
