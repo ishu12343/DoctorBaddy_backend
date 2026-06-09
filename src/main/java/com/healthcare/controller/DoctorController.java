@@ -1,22 +1,22 @@
 package com.healthcare.controller;
 
-
+import com.healthcare.dto.ApiResponse;
+import com.healthcare.dto.AppointmentRequest;
+import com.healthcare.dto.ForgotPasswordRequest;
+import com.healthcare.dto.LoginRequest;
 import com.healthcare.model.Doctor;
 import com.healthcare.service.DoctorService;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import com.healthcare.exception.AuthenticationException;
 
-import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
-import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/doctors")
-//@CrossOrigin(origins = "http://localhost:5173")
+@RequestMapping("/api/doctor")
 public class DoctorController {
     private final DoctorService doctorService;
 
@@ -24,85 +24,187 @@ public class DoctorController {
         this.doctorService = doctorService;
     }
 
-    @PostMapping
-    public Doctor createDoctor(@RequestBody Doctor doctor) {
-        return doctorService.saveDoctor(doctor);
-    }
-
-    @GetMapping
-    public List<Doctor> getAllDoctors() {
-        return doctorService.getAllDoctors();
-    }
-
-    @PostMapping("/signup")
-    public ResponseEntity<?> registerDoctor(@RequestParam("fullName") String fullName,
-                                            @RequestParam("email") String email,
-                                            @RequestParam("mobile") String mobile,
-                                            @RequestParam("password") String password,
-                                            @RequestParam("confirmPassword") String confirmPassword,
-                                            @RequestParam("registrationNumber") String registrationNumber,
-                                            @RequestParam("council") String council,
-                                            @RequestParam("specialty") String specialty,
-                                            @RequestParam("experience") int experience,
-                                            @RequestParam("degree") String degree,
-                                            @RequestParam("clinicName") String clinicName,
-                                            @RequestParam("clinicAddress") String clinicAddress,
-                                            @RequestParam("idProof") MultipartFile idProof,
-                                            @RequestParam("license") MultipartFile license,
-                                            @RequestParam("degreeCert") MultipartFile degreeCert,
-                                            @RequestParam("photo") MultipartFile photo) throws IOException {
-
-    	Doctor doctor = new Doctor();
-    	doctor.setFullName(fullName);
-    	doctor.setEmail(email);
-    	doctor.setMobile(mobile);
-    	doctor .setPassword(password);
-    	doctor.setRegistrationNumber(registrationNumber);
-    	doctor .setCouncil(council);
-    	doctor  .setSpecialty(specialty);
-    	doctor.setExperience(experience);
-    	doctor  .setDegree(degree);
-    	doctor  .setClinicName(clinicName);
-    	doctor .setClinicAddress(clinicAddress);
-
-        return ResponseEntity.ok(doctorService.registerDoctor(doctor, idProof, license, degreeCert, photo));
-    }
+    // ===== FORGOT PASSWORD ENDPOINTS =====
     
-//    @PostMapping("/login")
-//    public ResponseEntity<?> loginDoctor(@RequestBody Doctor loginRequest) {
-//        try {
-//            Doctor doctor = doctorService.login(loginRequest);
-//            return ResponseEntity.ok(doctor);
-//        } catch (ResourceNotFoundException | AuthenticationException ex) {
-//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
-//        }
-//    }
-    @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Doctor loginRequest) {
+    @PostMapping("/forgot-password/send-otp")
+    public ResponseEntity<?> sendOtp(@RequestBody Map<String, String> request) {
         try {
-            System.out.println("Login request received for email: " + loginRequest.getEmail());
-            
-            if (loginRequest.getEmail() == null || loginRequest.getEmail().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Email is required"));
-            }
-            if (loginRequest.getPassword() == null || loginRequest.getPassword().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Password is required"));
-            }
-            
-            String token = doctorService.login(loginRequest);
-            System.out.println("Login successful, generated token: " + token);
-            
-            return ResponseEntity.ok(Collections.singletonMap("token", token));
-        } catch (AuthenticationException e) {
-            System.err.println("Authentication failed: " + e.getMessage());
-            return ResponseEntity.status(401).body(Collections.singletonMap("error", e.getMessage()));
+            String identifier = request.get("identifier");
+            return ResponseEntity.ok(doctorService.sendOtp(identifier));
         } catch (Exception e) {
-            System.err.println("Error during doctor login: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(Collections.singletonMap("error", 
-                "An error occurred during login: " + e.getMessage()));
+            return ResponseEntity.status(500).body(ApiResponse.error("Failed to send OTP", e.getMessage()));
         }
     }
     
+    @PostMapping("/forgot-password/reset")
+    public ResponseEntity<?> resetPassword(@RequestBody ForgotPasswordRequest request) {
+        try {
+            return ResponseEntity.ok(doctorService.resetPassword(request));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(ApiResponse.error("Failed to reset password", e.getMessage()));
+        }
+    }
 
+    // ===== REGISTER =====
+    
+    @PostMapping("/register")
+    public ResponseEntity<?> registerDoctor(@RequestBody Doctor doctor) {
+        try {
+            return ResponseEntity.ok(doctorService.registerDoctor(doctor));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Registration failed: " + e.getMessage()));
+        }
+    }
+
+    // ===== LOGIN =====
+    
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+        try {
+            String identifier = loginRequest.getEmail() != null ? loginRequest.getEmail() : loginRequest.getIdentifier();
+            String password = loginRequest.getPassword();
+            
+            if (identifier == null || identifier.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Email/mobile and password are required"));
+            }
+            if (password == null || password.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body(Collections.singletonMap("error", "Email/mobile and password are required"));
+            }
+            
+            return ResponseEntity.ok(doctorService.login(identifier, password));
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(401).body(Collections.singletonMap("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Login failed: " + e.getMessage()));
+        }
+    }
+    
+    // ===== LOGOUT =====
+    
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request) {
+        return ResponseEntity.ok(Collections.singletonMap("message", "Doctor logged out successfully"));
+    }
+
+    // ===== PROFILE =====
+    
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile(HttpServletRequest request) {
+        try {
+            Long doctorId = getUserIdFromToken(request);
+            return ResponseEntity.ok(doctorService.getProfile(doctorId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to fetch profile: " + e.getMessage()));
+        }
+    }
+    
+    @PutMapping("/profile/update")
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, Object> updates, HttpServletRequest request) {
+        try {
+            Long doctorId = getUserIdFromToken(request);
+            return ResponseEntity.ok(doctorService.updateProfile(doctorId, updates));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Profile update failed: " + e.getMessage()));
+        }
+    }
+
+    // ===== APPOINTMENT MANAGEMENT =====
+    
+    @GetMapping("/appointments")
+    public ResponseEntity<?> getAppointments(HttpServletRequest request) {
+        try {
+            Long doctorId = getUserIdFromToken(request);
+            return ResponseEntity.ok(doctorService.getAppointments(doctorId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to fetch appointments: " + e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/appointments/{appointmentId}/approve")
+    public ResponseEntity<?> approveAppointment(@PathVariable Long appointmentId, HttpServletRequest request) {
+        try {
+            Long doctorId = getUserIdFromToken(request);
+            return ResponseEntity.ok(doctorService.approveAppointment(appointmentId, doctorId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to approve appointment: " + e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/appointments/{appointmentId}/reject")
+    public ResponseEntity<?> rejectAppointment(@PathVariable Long appointmentId, HttpServletRequest request) {
+        try {
+            Long doctorId = getUserIdFromToken(request);
+            return ResponseEntity.ok(doctorService.rejectAppointment(appointmentId, doctorId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to reject appointment: " + e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/appointments/{appointmentId}/complete")
+    public ResponseEntity<?> completeAppointment(@PathVariable Long appointmentId, HttpServletRequest request) {
+        try {
+            Long doctorId = getUserIdFromToken(request);
+            return ResponseEntity.ok(doctorService.completeAppointment(appointmentId, doctorId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to complete appointment: " + e.getMessage()));
+        }
+    }
+    
+    @PostMapping("/appointments/{appointmentId}/reschedule")
+    public ResponseEntity<?> rescheduleAppointment(@PathVariable Long appointmentId, @RequestBody AppointmentRequest request, HttpServletRequest httpRequest) {
+        try {
+            Long doctorId = getUserIdFromToken(httpRequest);
+            return ResponseEntity.ok(doctorService.rescheduleAppointment(appointmentId, doctorId, request));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to reschedule appointment: " + e.getMessage()));
+        }
+    }
+    
+    @GetMapping("/appointments/stats")
+    public ResponseEntity<?> getAppointmentStats(HttpServletRequest request) {
+        try {
+            Long doctorId = getUserIdFromToken(request);
+            return ResponseEntity.ok(doctorService.getAppointmentStats(doctorId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to fetch appointment stats: " + e.getMessage()));
+        }
+    }
+    
+    @GetMapping("/patients")
+    public ResponseEntity<?> getPatients(HttpServletRequest request) {
+        try {
+            Long doctorId = getUserIdFromToken(request);
+            return ResponseEntity.ok(doctorService.getPatients(doctorId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to fetch patients: " + e.getMessage()));
+        }
+    }
+    
+    @GetMapping("/ratings/summary")
+    public ResponseEntity<?> getRatingSummary(HttpServletRequest request) {
+        try {
+            Long doctorId = getUserIdFromToken(request);
+            return ResponseEntity.ok(doctorService.getRatingSummary(doctorId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to fetch rating summary: " + e.getMessage()));
+        }
+    }
+    
+    @GetMapping("/recent-activities")
+    public ResponseEntity<?> getRecentActivities(HttpServletRequest request) {
+        try {
+            Long doctorId = getUserIdFromToken(request);
+            return ResponseEntity.ok(doctorService.getRecentActivities(doctorId));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to fetch recent activities: " + e.getMessage()));
+        }
+    }
+    
+    private Long getUserIdFromToken(HttpServletRequest request) {
+        Object userId = request.getAttribute("userId");
+        if (userId != null) {
+            return Long.parseLong(userId.toString());
+        }
+        throw new RuntimeException("Invalid token");
+    }
 }

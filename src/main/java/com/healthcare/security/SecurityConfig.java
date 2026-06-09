@@ -31,12 +31,17 @@ public class SecurityConfig {
             .csrf().disable()
             .authorizeRequests()
                 .antMatchers(
-                    "/api/doctors/signup",
-                    "/api/doctors/login",
-                    "/api/users/login",
-                    "/api/users/signup",
-                    "/api/auth/doctors/register",
-                    "/api/auth/patients/register",
+                    "/api/doctor/register",
+                    "/api/doctor/login",
+                    "/api/doctor/forgot-password/**",
+                    "/api/patient/register",
+                    "/api/patient/login",
+                    "/api/patient/forgot-password/**",
+                    "/api/patient/doctors",
+                    "/admin/create",
+                    "/admin/login",
+                    "/admin/forgot-password/**",
+                    "/ping",
                     "/error"
                 ).permitAll()
                 .anyRequest().authenticated()

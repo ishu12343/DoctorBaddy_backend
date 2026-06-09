@@ -21,12 +21,18 @@ import java.util.List;
 public class JwtFilter extends OncePerRequestFilter {
 
     private static final List<String> EXCLUDED_PATHS = Arrays.asList(
-        "/api/users/login",
-        "/api/users/signup",
-        "/api/doctors/login",
-        "/api/doctors/signup",
-        "/api/auth/doctors/register",
-        "/api/auth/patients/register"
+        "/api/doctor/register",
+        "/api/doctor/login",
+        "/api/doctor/forgot-password",
+        "/api/patient/register",
+        "/api/patient/login",
+        "/api/patient/forgot-password",
+        "/api/patient/doctors",
+        "/admin/create",
+        "/admin/login",
+        "/admin/forgot-password",
+        "/ping",
+        "/error"
     );
 
     private final JwtUtil jwtUtil;
@@ -56,13 +62,19 @@ public class JwtFilter extends OncePerRequestFilter {
                 jwt = authHeader.substring(7);
 
                 if (jwtUtil.validateToken(jwt)) {
-                    String username = jwtUtil.extractUsername(jwt);
+                    String userId = jwtUtil.extractUsername(jwt);
+                    Long userIdLong = jwtUtil.extractUserId(jwt);
 
                     UsernamePasswordAuthenticationToken authToken =
-                            new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+                            new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    
+                    // Set userId in request attribute for controllers to use
+                    if (userIdLong != null) {
+                        request.setAttribute("userId", userIdLong);
+                    }
                 }
             }
         } catch (Exception e) {

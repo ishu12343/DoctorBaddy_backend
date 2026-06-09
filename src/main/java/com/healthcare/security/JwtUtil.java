@@ -29,6 +29,17 @@ public class JwtUtil {
                 .compact();
     }
     
+    public String generateToken(String userId, String role, String email) {
+        return Jwts.builder()
+                .setSubject(userId)
+                .claim("role", role)
+                .claim("email", email)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .signWith(getSignInKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+    
     public String generateToken(String email) {
         return generateToken(email, "USER");
     }
@@ -64,8 +75,21 @@ public class JwtUtil {
     }
 
 	public Long extractUserId(String token) {
-		// TODO Auto-generated method stub
-		return null;
+		String subject = extractUsername(token);
+		try {
+			return Long.parseLong(subject);
+		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
+	
+	public String extractRole(String token) {
+		return Jwts.parserBuilder()
+				.setSigningKey(getSignInKey())
+				.build()
+				.parseClaimsJws(token)
+				.getBody()
+				.get("role", String.class);
 	}
 }
 

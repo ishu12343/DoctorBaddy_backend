@@ -5,29 +5,30 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 /**
- * Appointment entity representing an appointment between a patient and a doctor.
+ * Rating entity representing patient ratings for doctors.
  */
 @Entity
-@Table(name = "appointments")
+@Table(name = "ratings")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Appointment {
+public class Rating {
+    
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "patient_id", nullable = false)
-    private Long patientId;
-
     @Column(name = "doctor_id", nullable = false)
     private Long doctorId;
-
-    @Column(name = "appointment_datetime", nullable = false)
-    private LocalDateTime appointmentDatetime;
     
-    private String reason;
-    private String status = "PENDING";
+    @Column(name = "patient_id", nullable = false)
+    private Long patientId;
+    
+    @Column(name = "appointment_id", nullable = false)
+    private Long appointmentId;
+    
+    private Integer rating;
+    private String comment;
     
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
