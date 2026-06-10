@@ -61,7 +61,7 @@ public class Doctor {
     @JsonProperty("licensePath")
     private String licensePath;
     
-    @Column(name = "photo_path", columnDefinition = "LONGTEXT")
+    @Column(name = "photo_path", columnDefinition = "TEXT")
     @JsonProperty("photoPath")
     private String photoPath;
     
