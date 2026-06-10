@@ -39,7 +39,6 @@ public class AuthServiceImpl implements AuthService {
         // Map DTO to Doctor entity
         Doctor doctor = new Doctor();
         doctor.setFullName(registration.getFullName());
-        doctor.setName(registration.getName());
         doctor.setEmail(registration.getEmail());
         doctor.setMobile(registration.getMobile());
         doctor.setPassword(passwordEncoder.encode(registration.getPassword()));
@@ -55,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
         doctor.setIdProofPath(registration.getIdProofPath());
         doctor.setLicensePath(registration.getLicensePath());
         doctor.setPhotoPath(registration.getPhotoPath());
-        doctor.setApproved(registration.isApproved());
+        doctor.setApproved(registration.getApproved());
         doctor.setRole(registration.getRole() != null ? registration.getRole() : "DOCTOR");
         doctor.setCreatedAt(LocalDateTime.now());
         doctor.setUpdatedAt(LocalDateTime.now());
