@@ -1,23 +1,12 @@
-# Use OpenJDK 11 as the base image for building
-FROM maven:3.8.6-openjdk-11-slim AS build
-
-# Set working directory
+# Build stage
+FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
-
-# Copy pom.xml and download dependencies
 COPY pom.xml .
-RUN mvn dependency:go-offline -B
-
-# Copy source code
 COPY src ./src
-
-# Build the application
 RUN mvn clean package -DskipTests
 
-# Use OpenJDK 11 as the runtime image
-FROM openjdk:11-jre-slim
-
-# Set working directory
+# Run stage
+FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
 # Copy the jar file from the build stage
