@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/api/admin")
 public class AdminController {
     private final AdminService adminService;
 
@@ -76,8 +76,8 @@ public class AdminController {
     }
     
     // ===== LOGOUT =====
-    
-    @PostMapping("/api/admin/logout")
+
+    @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request) {
         return ResponseEntity.ok(Collections.singletonMap("message", "Admin logged out successfully. Token revoked."));
     }
