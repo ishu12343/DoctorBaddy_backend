@@ -38,9 +38,9 @@ public class SecurityConfig {
                     "/api/patient/login",
                     "/api/patient/forgot-password/**",
                     "/api/patient/doctors",
-                    "/admin/create",
-                    "/admin/login",
-                    "/admin/forgot-password/**",
+                    "/api/admin/create",
+                    "/api/admin/login",
+                    "/api/admin/forgot-password/**",
                     "/ping",
                     "/error"
                 ).permitAll()
