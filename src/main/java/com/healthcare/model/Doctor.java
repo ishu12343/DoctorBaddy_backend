@@ -49,6 +49,12 @@ public class Doctor {
     private String specialty;
     private String experience;
     
+    private Double rating;
+    
+    @Column(name = "consultation_fee")
+    @JsonProperty("consultationFee")
+    private Double consultationFee;
+    
     @Column(name = "degree_cert_path")
     @JsonProperty("degreeCertPath")
     private String degreeCertPath;

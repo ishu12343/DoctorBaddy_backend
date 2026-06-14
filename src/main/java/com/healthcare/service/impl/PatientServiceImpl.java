@@ -293,14 +293,15 @@ public class PatientServiceImpl implements PatientService {
             doctorData.put("available_days", doctor.getAvailableDays());
             doctorData.put("available_from", doctor.getAvailableFrom());
             doctorData.put("available_to", doctor.getAvailableTo());
-            doctorData.put("languages", doctor.getLanguages() != null ? 
+            doctorData.put("languages", doctor.getLanguages() != null ?
                 Arrays.asList(doctor.getLanguages().split(",")) : new ArrayList<>());
             doctorData.put("profile_photo", doctor.getProfilePhoto());
-            
+            doctorData.put("consultation_fee", doctor.getConsultationFee() != null ? doctor.getConsultationFee() : 0.0);
+
             // Get rating information
             Double avgRating = ratingRepository.getAverageRatingByDoctorId(doctor.getId());
             Long totalReviews = ratingRepository.countByDoctorId(doctor.getId());
-            
+
             doctorData.put("average_rating", avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0);
             doctorData.put("total_reviews", totalReviews != null ? totalReviews : 0);
             
