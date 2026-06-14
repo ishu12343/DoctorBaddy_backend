@@ -298,11 +298,11 @@ public class PatientServiceImpl implements PatientService {
             doctorData.put("profile_photo", doctor.getProfilePhoto());
             doctorData.put("consultation_fee", doctor.getConsultationFee() != null ? doctor.getConsultationFee() : 0.0);
 
-            // Get rating information
-            Double avgRating = ratingRepository.getAverageRatingByDoctorId(doctor.getId());
-            Long totalReviews = ratingRepository.countByDoctorId(doctor.getId());
+            // Use rating from doctor entity instead of calculating from RatingRepository
+            doctorData.put("average_rating", doctor.getRating() != null ? doctor.getRating() : 0.0);
 
-            doctorData.put("average_rating", avgRating != null ? Math.round(avgRating * 10.0) / 10.0 : 0.0);
+            // Get total reviews count
+            Long totalReviews = ratingRepository.countByDoctorId(doctor.getId());
             doctorData.put("total_reviews", totalReviews != null ? totalReviews : 0);
             
             formattedDoctors.add(doctorData);
