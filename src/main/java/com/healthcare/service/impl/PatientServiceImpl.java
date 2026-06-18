@@ -2,6 +2,7 @@ package com.healthcare.service.impl;
 
 import com.healthcare.dto.AppointmentRequest;
 import com.healthcare.dto.ForgotPasswordRequest;
+import com.healthcare.dto.RatingRequest;
 import com.healthcare.model.Appointment;
 import com.healthcare.model.Doctor;
 import com.healthcare.model.Patient;
@@ -420,38 +421,86 @@ public class PatientServiceImpl implements PatientService {
     public Map<String, Object> rescheduleAppointment(Long appointmentId, Long patientId, AppointmentRequest request) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
             .orElseThrow(() -> new RuntimeException("Appointment not found"));
-        
+
         if (!appointment.getPatientId().equals(patientId)) {
             throw new RuntimeException("Appointment not found");
         }
-        
+
         if (request.getNewDate() == null || request.getNewTime() == null) {
             throw new RuntimeException("New date and time are required");
         }
-        
+
         try {
             LocalDateTime newDateTime = LocalDateTime.parse(
                 request.getNewDate() + " " + request.getNewTime() + ":00",
                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
             );
-            
+
             if (newDateTime.isBefore(LocalDateTime.now())) {
                 throw new RuntimeException("New appointment time must be in the future");
             }
-            
+
             appointment.setAppointmentDatetime(newDateTime);
             appointment.setStatus("CONFIRMED");
             appointmentRepository.save(appointment);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Appointment rescheduled successfully");
             response.put("new_datetime", newDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
             response.put("appointment_id", appointmentId);
-            
+
             return response;
         } catch (Exception e) {
             throw new RuntimeException("Invalid date or time format");
         }
+    }
+
+    @Override
+    public Map<String, Object> rateAppointment(Long appointmentId, Long patientId, RatingRequest request) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+            .orElseThrow(() -> new RuntimeException("Appointment not found"));
+
+        if (!appointment.getPatientId().equals(patientId)) {
+            throw new RuntimeException("Appointment not found");
+        }
+
+        if (request.getRating() == null || request.getRating() < 1 || request.getRating() > 5) {
+            throw new RuntimeException("Rating must be between 1 and 5");
+        }
+
+        // Check if rating already exists for this appointment
+        Optional<Rating> existingRating = ratingRepository.findByAppointmentId(appointmentId);
+        if (existingRating.isPresent()) {
+            // Update existing rating
+            Rating rating = existingRating.get();
+            rating.setRating(request.getRating());
+            rating.setComment(request.getReview());
+            ratingRepository.save(rating);
+        } else {
+            // Create new rating
+            Rating rating = new Rating();
+            rating.setDoctorId(appointment.getDoctorId());
+            rating.setPatientId(patientId);
+            rating.setAppointmentId(appointmentId);
+            rating.setRating(request.getRating());
+            rating.setComment(request.getReview());
+            ratingRepository.save(rating);
+        }
+
+        // Recalculate and update the doctor's average rating
+        Long doctorId = appointment.getDoctorId();
+        Double averageRating = ratingRepository.getAverageRatingByDoctorId(doctorId);
+        Doctor doctor = doctorRepository.findById(doctorId)
+            .orElseThrow(() -> new RuntimeException("Doctor not found"));
+        doctor.setRating(averageRating != null ? averageRating : 0.0);
+        doctorRepository.save(doctor);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Rating submitted successfully");
+        response.put("appointment_id", appointmentId);
+
+        return response;
     }
 }

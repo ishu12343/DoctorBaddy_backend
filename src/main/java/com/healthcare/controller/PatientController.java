@@ -4,6 +4,7 @@ import com.healthcare.dto.ApiResponse;
 import com.healthcare.dto.AppointmentRequest;
 import com.healthcare.dto.ForgotPasswordRequest;
 import com.healthcare.dto.LoginRequest;
+import com.healthcare.dto.RatingRequest;
 import com.healthcare.model.Patient;
 import com.healthcare.service.PatientService;
 
@@ -176,7 +177,17 @@ public class PatientController {
             return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to reschedule appointment: " + e.getMessage()));
         }
     }
-    
+
+    @PostMapping("/appointments/{appointmentId}/rate")
+    public ResponseEntity<?> rateAppointment(@PathVariable Long appointmentId, @RequestBody RatingRequest request, HttpServletRequest httpRequest) {
+        try {
+            Long patientId = getUserIdFromToken(httpRequest);
+            return ResponseEntity.ok(patientService.rateAppointment(appointmentId, patientId, request));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to rate appointment: " + e.getMessage()));
+        }
+    }
+
     private Long getUserIdFromToken(HttpServletRequest request) {
         Object userId = request.getAttribute("userId");
         if (userId != null) {
