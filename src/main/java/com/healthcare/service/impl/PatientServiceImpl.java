@@ -379,6 +379,9 @@ public class PatientServiceImpl implements PatientService {
                 apptData.put("specialty", doctor.getSpecialty());
                 apptData.put("clinic_name", doctor.getClinicName());
                 apptData.put("doctor_mobile", doctor.getMobile());
+                apptData.put("available_days", doctor.getAvailableDays());
+                apptData.put("available_from", doctor.getAvailableFrom());
+                apptData.put("available_to", doctor.getAvailableTo());
             }
             
             Optional<Rating> rating = ratingRepository.findByAppointmentId(appointment.getId());
@@ -440,15 +443,21 @@ public class PatientServiceImpl implements PatientService {
                 throw new RuntimeException("New appointment time must be in the future");
             }
 
-            appointment.setAppointmentDatetime(newDateTime);
-            appointment.setStatus("CONFIRMED");
-            appointmentRepository.save(appointment);
+            // Create a new appointment instead of updating the existing one
+            Appointment newAppointment = new Appointment();
+            newAppointment.setPatientId(appointment.getPatientId());
+            newAppointment.setDoctorId(appointment.getDoctorId());
+            newAppointment.setAppointmentDatetime(newDateTime);
+            newAppointment.setReason(request.getReason() != null ? request.getReason() : appointment.getReason());
+            newAppointment.setStatus("PENDING");
+            newAppointment.setCreatedAt(LocalDateTime.now());
+            appointmentRepository.save(newAppointment);
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "Appointment rescheduled successfully");
             response.put("new_datetime", newDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-            response.put("appointment_id", appointmentId);
+            response.put("appointment_id", newAppointment.getId());
 
             return response;
         } catch (Exception e) {
@@ -472,21 +481,17 @@ public class PatientServiceImpl implements PatientService {
         // Check if rating already exists for this appointment
         Optional<Rating> existingRating = ratingRepository.findByAppointmentId(appointmentId);
         if (existingRating.isPresent()) {
-            // Update existing rating
-            Rating rating = existingRating.get();
-            rating.setRating(request.getRating());
-            rating.setComment(request.getReview());
-            ratingRepository.save(rating);
-        } else {
-            // Create new rating
-            Rating rating = new Rating();
-            rating.setDoctorId(appointment.getDoctorId());
-            rating.setPatientId(patientId);
-            rating.setAppointmentId(appointmentId);
-            rating.setRating(request.getRating());
-            rating.setComment(request.getReview());
-            ratingRepository.save(rating);
+            throw new RuntimeException("You have already rated this appointment. Ratings cannot be changed.");
         }
+
+        // Create new rating
+        Rating rating = new Rating();
+        rating.setDoctorId(appointment.getDoctorId());
+        rating.setPatientId(patientId);
+        rating.setAppointmentId(appointmentId);
+        rating.setRating(request.getRating());
+        rating.setComment(request.getReview());
+        ratingRepository.save(rating);
 
         // Recalculate and update the doctor's average rating
         Long doctorId = appointment.getDoctorId();
