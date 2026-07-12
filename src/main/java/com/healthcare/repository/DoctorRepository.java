@@ -17,7 +17,7 @@ public interface DoctorRepository extends JpaRepository<Doctor, Long> {
     @Query("SELECT d FROM Doctor d WHERE d.approved = true AND d.suspended = false AND d.status = 'ACTIVE'")
     List<Doctor> findActiveDoctors();
     
-    @Query("SELECT d FROM Doctor d WHERE d.approved = true AND d.suspended = false AND d.status = 'ACTIVE' AND (:specialty IS NULL OR d.specialty LIKE %:specialty%) AND (:city IS NULL OR d.city LIKE %:city%) AND (:search IS NULL OR d.fullName LIKE %:search% OR d.specialty LIKE %:search%)")
+    @Query("SELECT d FROM Doctor d WHERE d.approved = true AND d.suspended = false AND d.status = 'ACTIVE' AND (:specialty IS NULL OR LOWER(d.specialty) LIKE LOWER(CONCAT('%', :specialty, '%'))) AND (:city IS NULL OR LOWER(TRIM(d.city)) LIKE LOWER(CONCAT('%', :city, '%'))) AND (:search IS NULL OR LOWER(d.fullName) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(d.specialty) LIKE LOWER(CONCAT('%', :search, '%')))")
     List<Doctor> findActiveDoctorsWithFilters(@Param("specialty") String specialty, @Param("city") String city, @Param("search") String search);
     
     @Query("SELECT d FROM Doctor d WHERE d.id = :id")
