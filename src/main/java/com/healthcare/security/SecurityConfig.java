@@ -41,6 +41,7 @@ public class SecurityConfig {
                     "/api/admin/create",
                     "/api/admin/login",
                     "/api/admin/forgot-password/**",
+                    "/api/otp/**",
                     "/ping",
                     "/error"
                 ).permitAll()

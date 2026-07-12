@@ -128,9 +128,12 @@ public class PatientController {
             @RequestParam(required = false) String specialty,
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) Long doctor_id) {
+            @RequestParam(required = false) Long doctor_id,
+            @RequestParam(required = false) String patient_address,
+            @RequestParam(required = false) String patient_location,
+            @RequestParam(required = false) String patient_city) {
         try {
-            return ResponseEntity.ok(patientService.listDoctors(specialty, city, search, doctor_id));
+            return ResponseEntity.ok(patientService.listDoctors(specialty, city, search, doctor_id, patient_address, patient_location, patient_city));
         } catch (Exception e) {
             return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to fetch doctors: " + e.getMessage()));
         }

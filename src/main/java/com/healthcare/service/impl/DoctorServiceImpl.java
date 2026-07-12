@@ -5,9 +5,11 @@ import com.healthcare.dto.ForgotPasswordRequest;
 import com.healthcare.exception.AuthenticationException;
 import com.healthcare.model.Appointment;
 import com.healthcare.model.Doctor;
+import com.healthcare.model.Otp;
 import com.healthcare.model.Patient;
 import com.healthcare.repository.AppointmentRepository;
 import com.healthcare.repository.DoctorRepository;
+import com.healthcare.repository.OtpRepository;
 import com.healthcare.repository.PatientRepository;
 import com.healthcare.repository.RatingRepository;
 import com.healthcare.security.JwtUtil;
@@ -29,6 +31,7 @@ public class DoctorServiceImpl implements DoctorService {
     private final AppointmentRepository appointmentRepository;
     private final PatientRepository patientRepository;
     private final RatingRepository ratingRepository;
+    private final OtpRepository otpRepository;
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
 
@@ -52,12 +55,34 @@ public class DoctorServiceImpl implements DoctorService {
             return response;
         }
         
+        // Verify OTP before registration
+        Otp otpRecord = otpRepository.findByEmailAndMobileAndUserType(
+            doctor.getEmail(), doctor.getMobile(), "DOCTOR"
+        ).orElse(null);
+        
+        if (otpRecord == null || !otpRecord.getVerified()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Please verify your OTP before registering");
+            return response;
+        }
+        
+        // Check if OTP has expired
+        if (LocalDateTime.now().isAfter(otpRecord.getExpiresAt())) {
+            otpRepository.delete(otpRecord);
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "OTP has expired. Please request a new OTP");
+            return response;
+        }
+        
         doctor.setPassword(passwordEncoder.encode(doctor.getPassword()));
         doctor.setApproved(false);
         doctor.setSuspended(false);
         doctor.setStatus("PENDING");
         
         Doctor savedDoctor = doctorRepository.save(doctor);
+        
+        // Delete the used OTP record
+        otpRepository.delete(otpRecord);
         
         String token = jwtUtil.generateToken(savedDoctor.getId().toString(), "DOCTOR");
         

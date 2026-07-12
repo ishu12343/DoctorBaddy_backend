@@ -5,6 +5,7 @@ import com.healthcare.dto.ForgotPasswordRequest;
 import com.healthcare.dto.RatingRequest;
 import com.healthcare.model.Appointment;
 import com.healthcare.model.Doctor;
+import com.healthcare.model.Otp;
 import com.healthcare.model.Patient;
 import com.healthcare.model.Rating;
 import com.healthcare.repository.*;
@@ -37,6 +38,9 @@ public class PatientServiceImpl implements PatientService {
     private RatingRepository ratingRepository;
     
     @Autowired
+    private OtpRepository otpRepository;
+    
+    @Autowired
     private JwtUtil jwtUtil;
     
     @Autowired
@@ -50,11 +54,33 @@ public class PatientServiceImpl implements PatientService {
             return response;
         }
         
+        // Verify OTP before registration
+        Otp otpRecord = otpRepository.findByEmailAndMobileAndUserType(
+            patient.getEmail(), patient.getMobile(), "PATIENT"
+        ).orElse(null);
+        
+        if (otpRecord == null || !otpRecord.getVerified()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "Please verify your OTP before registering");
+            return response;
+        }
+        
+        // Check if OTP has expired
+        if (LocalDateTime.now().isAfter(otpRecord.getExpiresAt())) {
+            otpRepository.delete(otpRecord);
+            Map<String, Object> response = new HashMap<>();
+            response.put("error", "OTP has expired. Please request a new OTP");
+            return response;
+        }
+        
         patient.setPassword(passwordEncoder.encode(patient.getPassword()));
         patient.setIsActive(true);
-        patient.setVerified(false);
+        patient.setVerified(true);
         
         Patient savedPatient = patientRepository.save(patient);
+        
+        // Delete the used OTP record
+        otpRepository.delete(otpRecord);
         
         String token = jwtUtil.generateToken(savedPatient.getId().toString(), "PATIENT", savedPatient.getEmail());
         
@@ -265,7 +291,7 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
-    public Map<String, Object> listDoctors(String specialty, String city, String search, Long doctorId) {
+    public Map<String, Object> listDoctors(String specialty, String city, String search, Long doctorId, String patientAddress, String patientLocation, String patientCity) {
         List<Doctor> doctors;
         
         if (doctorId != null) {
@@ -273,7 +299,7 @@ public class PatientServiceImpl implements PatientService {
                 .filter(d -> d.getId().equals(doctorId) && d.getApproved() && !d.getSuspended() && "ACTIVE".equals(d.getStatus()))
                 .collect(Collectors.toList());
         } else {
-            doctors = doctorRepository.findActiveDoctorsWithFilters(specialty, city, search);
+            doctors = doctorRepository.findActiveDoctorsWithFilters(specialty, city, search, patientAddress, patientLocation, patientCity);
         }
         
         List<Map<String, Object>> formattedDoctors = new ArrayList<>();
