@@ -16,6 +16,7 @@ public interface PatientService {
     Map<String, Object> listDoctors(String specialty, String city, String search, Long doctorId, String patientAddress, String patientLocation, String patientCity);
     Map<String, Object> bookAppointment(Long patientId, AppointmentRequest request);
     Map<String, Object> getAppointments(Long patientId);
+    Map<String, Object> updateAppointment(Long appointmentId, Long patientId, AppointmentRequest request);
     Map<String, Object> cancelAppointment(Long appointmentId, Long patientId);
     Map<String, Object> rescheduleAppointment(Long appointmentId, Long patientId, AppointmentRequest request);
     Map<String, Object> rateAppointment(Long appointmentId, Long patientId, RatingRequest request);

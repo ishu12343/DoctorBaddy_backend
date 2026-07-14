@@ -161,6 +161,16 @@ public class PatientController {
         }
     }
     
+    @PutMapping("/appointments/{appointmentId}")
+    public ResponseEntity<?> updateAppointment(@PathVariable Long appointmentId, @RequestBody AppointmentRequest request, HttpServletRequest httpRequest) {
+        try {
+            Long patientId = getUserIdFromToken(httpRequest);
+            return ResponseEntity.ok(patientService.updateAppointment(appointmentId, patientId, request));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Collections.singletonMap("error", "Failed to update appointment: " + e.getMessage()));
+        }
+    }
+    
     @PutMapping("/appointments/{appointmentId}/cancel")
     public ResponseEntity<?> cancelAppointment(@PathVariable Long appointmentId, HttpServletRequest request) {
         try {

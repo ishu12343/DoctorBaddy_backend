@@ -384,11 +384,69 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
+    public Map<String, Object> updateAppointment(Long appointmentId, Long patientId, AppointmentRequest request) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+            .orElseThrow(() -> new RuntimeException("Appointment not found"));
+        
+        if (!appointment.getPatientId().equals(patientId)) {
+            throw new RuntimeException("Appointment not found");
+        }
+        
+        if (!"PENDING".equals(appointment.getStatus())) {
+            throw new RuntimeException("Only pending appointments can be updated");
+        }
+        
+        if (request.getAppointmentDate() == null || request.getAppointmentTime() == null) {
+            throw new RuntimeException("Appointment date and time are required");
+        }
+        
+        try {
+            LocalDateTime newDateTime = LocalDateTime.parse(
+                request.getAppointmentDate() + " " + request.getAppointmentTime(),
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+            );
+            
+            if (newDateTime.isBefore(LocalDateTime.now())) {
+                throw new RuntimeException("New appointment time must be in the future");
+            }
+            
+            // Check for conflicts with other appointments at the same time (excluding current appointment)
+            Optional<Appointment> existingAppointment = appointmentRepository
+                .findByDoctorIdAndDatetimeNotCancelled(appointment.getDoctorId(), newDateTime);
+            
+            if (existingAppointment.isPresent() && !existingAppointment.get().getId().equals(appointmentId)) {
+                throw new RuntimeException("This time slot is already booked");
+            }
+            
+            // Update the appointment
+            appointment.setAppointmentDatetime(newDateTime);
+            if (request.getReason() != null) {
+                appointment.setReason(request.getReason());
+            }
+            appointmentRepository.save(appointment);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Appointment updated successfully");
+            response.put("appointment_id", appointment.getId());
+            response.put("new_datetime", newDateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+            
+            return response;
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid date or time format");
+        }
+    }
+
+    @Override
     public Map<String, Object> getAppointments(Long patientId) {
         List<Appointment> appointments = appointmentRepository.findByPatientIdOrderByAppointmentDatetimeDesc(patientId);
         
         List<Map<String, Object>> appointmentList = new ArrayList<>();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
         
         for (Appointment appointment : appointments) {
             Doctor doctor = doctorRepository.findById(appointment.getDoctorId()).orElse(null);
@@ -396,6 +454,8 @@ public class PatientServiceImpl implements PatientService {
             Map<String, Object> apptData = new HashMap<>();
             apptData.put("id", appointment.getId());
             apptData.put("appointment_datetime", appointment.getAppointmentDatetime().format(formatter));
+            apptData.put("appointment_date", appointment.getAppointmentDatetime().format(dateFormatter));
+            apptData.put("appointment_time", appointment.getAppointmentDatetime().format(timeFormatter));
             apptData.put("reason", appointment.getReason());
             apptData.put("status", appointment.getStatus());
             apptData.put("created_at", appointment.getCreatedAt().format(formatter));
