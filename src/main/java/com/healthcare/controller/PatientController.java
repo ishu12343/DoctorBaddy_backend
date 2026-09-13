@@ -99,13 +99,21 @@ public class PatientController {
     }
     
     @PutMapping("/updateprofile")
-    public ResponseEntity<?> updateProfile(@RequestParam Map<String, String> updates, 
+    public ResponseEntity<?> updateProfile(@RequestParam(required = false) Map<String, String> updates,
                                            @RequestParam(required = false) MultipartFile photoPath,
                                            @RequestParam(required = false) MultipartFile documentPath,
+                                           @RequestBody(required = false) Map<String, String> jsonUpdates,
                                            HttpServletRequest request) {
         try {
             Long patientId = getUserIdFromToken(request);
-            Map<String, Object> updateMap = new HashMap<>(updates);
+            Map<String, Object> updateMap = new HashMap<>();
+            
+            // Use JSON body if present, otherwise use form parameters
+            if (jsonUpdates != null && !jsonUpdates.isEmpty()) {
+                updateMap.putAll(jsonUpdates);
+            } else if (updates != null && !updates.isEmpty()) {
+                updateMap.putAll(updates);
+            }
             
             // Handle file uploads if present
             if (photoPath != null && !photoPath.isEmpty()) {
