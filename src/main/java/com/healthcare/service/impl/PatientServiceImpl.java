@@ -262,13 +262,19 @@ public class PatientServiceImpl implements PatientService {
         Patient patient = patientRepository.findById(patientId)
             .orElseThrow(() -> new RuntimeException("Patient not found"));
         
+        System.out.println("DEBUG Service: Before update - photo_path: " + patient.getPhotoPath());
+        
         if (updates.containsKey("full_name")) patient.setFullName((String) updates.get("full_name"));
         if (updates.containsKey("mobile")) patient.setMobile((String) updates.get("mobile"));
         if (updates.containsKey("gender")) patient.setGender((String) updates.get("gender"));
         if (updates.containsKey("dob")) patient.setDateOfBirth((String) updates.get("dob"));
         if (updates.containsKey("blood_group")) patient.setBloodGroup((String) updates.get("blood_group"));
         if (updates.containsKey("address")) patient.setAddress((String) updates.get("address"));
-        if (updates.containsKey("photo_path")) patient.setPhotoPath((String) updates.get("photo_path"));
+        if (updates.containsKey("photo_path")) {
+            String photoPath = (String) updates.get("photo_path");
+            System.out.println("DEBUG Service: Setting photo_path to: " + photoPath);
+            patient.setPhotoPath(photoPath);
+        }
         if (updates.containsKey("city")) patient.setCity((String) updates.get("city"));
         if (updates.containsKey("state")) patient.setState((String) updates.get("state"));
         if (updates.containsKey("zip")) patient.setZip((String) updates.get("zip"));
@@ -282,7 +288,9 @@ public class PatientServiceImpl implements PatientService {
         if (updates.containsKey("document_path")) patient.setDocumentPath((String) updates.get("document_path"));
         
         patient.setUpdatedAt(LocalDateTime.now());
-        patientRepository.save(patient);
+        Patient savedPatient = patientRepository.save(patient);
+        
+        System.out.println("DEBUG Service: After save - photo_path: " + savedPatient.getPhotoPath());
         
         Map<String, Object> response = new HashMap<>();
         response.put("message", "✅ Patient profile updated successfully");

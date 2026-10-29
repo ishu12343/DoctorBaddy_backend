@@ -1,5 +1,6 @@
 package com.healthcare.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.healthcare.dto.ApiResponse;
 import com.healthcare.dto.AppointmentRequest;
 import com.healthcare.dto.ForgotPasswordRequest;
@@ -10,7 +11,6 @@ import com.healthcare.service.PatientService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.Collections;
@@ -21,9 +21,11 @@ import java.util.Map;
 @RequestMapping("/api/patient")
 public class PatientController {
     private final PatientService patientService;
+    private final ObjectMapper objectMapper;
 
     public PatientController(PatientService patientService) {
         this.patientService = patientService;
+        this.objectMapper = new ObjectMapper();
     }
 
     // ===== FORGOT PASSWORD ENDPOINTS =====
@@ -99,32 +101,35 @@ public class PatientController {
     }
     
     @PutMapping("/updateprofile")
-    public ResponseEntity<?> updateProfile(@RequestParam(required = false) Map<String, String> updates,
-                                           @RequestParam(required = false) MultipartFile photoPath,
-                                           @RequestParam(required = false) MultipartFile documentPath,
-                                           @RequestBody(required = false) Map<String, String> jsonUpdates,
+    public ResponseEntity<?> updateProfile(@RequestBody Map<String, Object> updates,
                                            HttpServletRequest request) {
         try {
             Long patientId = getUserIdFromToken(request);
-            Map<String, Object> updateMap = new HashMap<>();
+            System.out.println("DEBUG: Received updates: " + updates);
+            System.out.println("DEBUG: Patient ID: " + patientId);
             
-            // Use JSON body if present, otherwise use form parameters
-            if (jsonUpdates != null && !jsonUpdates.isEmpty()) {
-                updateMap.putAll(jsonUpdates);
-            } else if (updates != null && !updates.isEmpty()) {
-                updateMap.putAll(updates);
+            // Handle documentPath - convert to JSON string for storage in photo_path
+            if (updates.containsKey("documentPath")) {
+                Object documentPath = updates.get("documentPath");
+                System.out.println("DEBUG: documentPath type: " + documentPath.getClass());
+                System.out.println("DEBUG: documentPath value: " + documentPath);
+                if (documentPath instanceof Map) {
+                    // Convert the documentPath map to JSON string for storage in photo_path
+                    String jsonString = objectMapper.writeValueAsString(documentPath);
+                    System.out.println("DEBUG: JSON string: " + jsonString);
+                    updates.put("photo_path", jsonString);
+                }
             }
             
-            // Handle file uploads if present
-            if (photoPath != null && !photoPath.isEmpty()) {
-                updateMap.put("photo_path", photoPath.getOriginalFilename());
-            }
-            if (documentPath != null && !documentPath.isEmpty()) {
-                updateMap.put("document_path", documentPath.getOriginalFilename());
+            // Map emergency_contact to emergency_contact_number for backend compatibility
+            if (updates.containsKey("emergency_contact")) {
+                updates.put("emergency_contact_number", updates.get("emergency_contact"));
             }
             
-            return ResponseEntity.ok(patientService.updateProfile(patientId, updateMap));
+            System.out.println("DEBUG: Final updates map: " + updates);
+            return ResponseEntity.ok(patientService.updateProfile(patientId, updates));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(500).body(Collections.singletonMap("error", "Profile update failed: " + e.getMessage()));
         }
     }
